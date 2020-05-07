@@ -3,12 +3,16 @@ const {RemoveResponse} = require('../../index').responses;
 
 describe('RemoveResponse class testing', () => {
 	it('should return correct data', () => {
-		const result = {
-			alias: 'test',
+		const id = 'test';
+		const result = true;
+
+		const responseResult = {
+			id,
+			result
 		};
 
-		const response = new RemoveResponse(result);
+		const response = new RemoveResponse(id, result);
 
-		assert.deepEqual(response.identity, result);
+		assert.deepEqual(response, responseResult);
 	});
 });
