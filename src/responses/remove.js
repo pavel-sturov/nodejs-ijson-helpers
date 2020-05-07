@@ -14,13 +14,15 @@ class RemoveResponse {
 	/**
 	 * @constructor
 	 *
+	 * @param {number|string} id
 	 * @param {Object} result
 	 */
-	constructor(result) {
+	constructor(id, result) {
 		/**
 		 * @private
 		 */
-		this.identity = result;
+		this.id = id;
+		this.result = result;
 	}
 
 	/**
@@ -30,7 +32,8 @@ class RemoveResponse {
 	 */
 	toJSON() {
 		return {
-			identity: this.identity,
+			id:     this.id,
+			result: this.result,
 		};
 	}
 }
