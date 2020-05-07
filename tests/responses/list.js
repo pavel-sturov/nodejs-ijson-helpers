@@ -1,11 +1,11 @@
-const assert                               = require('assert');
-const { ListResponse, PaginationResponse } = require('../../index').responses;
-const { JsonQuery }                        = require('../../index').services;
+const assert                             = require('assert');
+const {ListResponse, PaginationResponse} = require('../../index').responses;
+const {JsonQuery}                        = require('../../index').services;
 
 describe('Test List response', () => {
 	it('should return correct format', () => {
 		const result   = {
-			rows:  [{ id: 1 }, { id: 2 }],
+			rows:  [{id: 1}, {id: 2}],
 			count: 2,
 		};
 		const query    = new JsonQuery();
