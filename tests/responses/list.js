@@ -11,7 +11,7 @@ describe('Test List response', () => {
 		const query    = new JsonQuery();
 		const response = new ListResponse(result, query);
 
-		assert.deepEqual(response.models, [...result.rows]);
+		assert.deepEqual(response.list, [...result.rows]);
 		assert.ok(response.pagination instanceof PaginationResponse);
 	});
 });

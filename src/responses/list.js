@@ -4,7 +4,7 @@ const PaginationResponse = require('./pagination');
  * @apiDefine DefaultListResponse
  * Default list response
  *
- * @apiSuccess {Object[]} models Models.
+ * @apiSuccess {Object[]} list Models.
  * @apiSuccess {[Pagination](#api-TYPES-ObjectPagination)} pagination List pagination.
  *
  * @apiVersion 1.0.0
@@ -20,7 +20,7 @@ class ListResponse
 	 *
 	 * @private
 	 */
-	models = [];
+	list = [];
 
 	/**
 	 * @type {PaginationResponse}
@@ -37,7 +37,7 @@ class ListResponse
 		/**
 		 * @private
 		 */
-		this.models = result.rows || [];
+		this.list = result.rows || [];
 
 		/**
 		 * @private
@@ -52,7 +52,7 @@ class ListResponse
 	 */
 	toJSON() {
 		return {
-			models:     this.models,
+			list:     this.list,
 			pagination: this.pagination,
 		};
 	}

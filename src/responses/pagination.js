@@ -5,9 +5,9 @@
  * @apiGroup TYPES
  *
  * @apiParam {Number} totalItems=0 total count items.
- * @apiParam {Number} page=1 current page.
+ * @apiParam {Number} currentPage=1 current page.
  * @apiParam {Number} perPage=20 page size.
- * @apiParam {Number} pageCount=1 cout all pages.
+ * @apiParam {Number} pageCount=1 count all pages.
  *
  * @apiVersion 1.0.0
  */
@@ -27,7 +27,7 @@ class PaginationResponse
 	/**
 	 * @type {number}
 	 */
-	page = 1;
+	currentPage = 1;
 
 	/**
 	 * @type {number}
@@ -56,7 +56,7 @@ class PaginationResponse
 		/**
 		 * @private
 		 */
-		this.page = query.getPage();
+		this.currentPage = query.getPage();
 
 		/**
 		 * @private
@@ -92,8 +92,8 @@ class PaginationResponse
 	 *
 	 * return {number}
 	 */
-	getPage = () => {
-		return this.page;
+	getCurrentPage = () => {
+		return this.currentPage;
 	};
 
 	/**
@@ -112,10 +112,10 @@ class PaginationResponse
 	 */
 	toJSON() {
 		return {
-			page:       this.page,
-			perPage:    this.perPage,
-			pageCount:  this.pageCount,
-			totalItems: this.totalItems,
+			currentPage: this.currentPage,
+			perPage:     this.perPage,
+			pageCount:   this.pageCount,
+			totalItems:  this.totalItems,
 		};
 	}
 }

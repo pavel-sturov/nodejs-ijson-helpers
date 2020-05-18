@@ -18,7 +18,9 @@ describe('PaginationResponse class testing', () => {
 	const response = new PaginationResponse(query, totalItems);
 
 	it('should return correct data', () => {
-		assert.deepEqual(response.toJSON(), result);
+		const {page, ...nextResult} = result;
+
+		assert.deepEqual(response.toJSON(), {...nextResult, currentPage: page});
 	});
 
 	it('should return total items', () => {
@@ -34,7 +36,7 @@ describe('PaginationResponse class testing', () => {
 	it('should return number of page', () => {
 		const {page} = config;
 
-		assert.deepEqual(response.getPage(), page);
+		assert.deepEqual(response.getCurrentPage(), page);
 	});
 
 	it('should return count per page', () => {
