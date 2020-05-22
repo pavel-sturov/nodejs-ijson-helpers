@@ -126,13 +126,16 @@ class JsonQuery
 					includes.push(expand);
 					break;
 				case 'object':
-					const { name, where, required } = expand;
+					const { name, where, required, limit, separate, order } = expand;
 
 					if (name && models[name]) {
 						includes.push({
 							model: models[name],
 							as:    name,
 							...(required !== undefined ? { required } : {}),
+							...(limit ? { limit } : {}),
+							...(separate !== undefined ? { separate } : {}),
+							...(order ? { order } : {}),
 							// @TODO validate where object
 							...(where ? { where } : {}),
 						});
