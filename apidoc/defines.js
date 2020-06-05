@@ -8,8 +8,8 @@
  *     {
  *     	 "jsonrpc": "2.0",
  *     	 "id": 1,
- *     	 "method": "See method below",
- *       "params": "See params section"
+ *     	 "method": "See method above",
+ *       "params": "See params section above"
  *     }
  */
 
