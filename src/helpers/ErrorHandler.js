@@ -1,6 +1,4 @@
-const { Connection } = require('../services');
-
-const { ValidationError } = Connection.getInstance().getSequelize();
+const Sequelize = require('sequelize');
 
 /**
  * Error handler class
@@ -15,7 +13,7 @@ class ErrorHandler
 	 * @return {undefined}
 	 */
 	static buildValidationError = error => {
-		if (error instanceof ValidationError) {
+		if (error instanceof Sequelize.ValidationError) {
 			error.code    = 422;
 			error.payload = error.errors.map(item => {
 				let { message, path, value } = item;
