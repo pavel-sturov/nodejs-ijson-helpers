@@ -1,5 +1,6 @@
 const { Connection } = require('../services');
-const _              = require('lodash');
+const { Op }         = require('sequelize');
+
 
 /**
  * Validator for sequelize models class
@@ -7,24 +8,29 @@ const _              = require('lodash');
 class Validator
 {
 	/**
-	 * Check is field unique
+	 * Check is field|fields unique
 	 *
 	 * @param {string} modelName
-	 * @param {string} field
+	 * @param {string|Array} fields
 	 * @param {string} fieldName
+	 * @param {string} value
 	 *
 	 * @return {undefined}
 	 */
-	static isUnique = (modelName, field, fieldName) => async (value, next) => {
+	static isUnique = async (modelName, fields) => {
 		const Model = Connection.getInstance().getModels()[modelName];
-		const where = { [field]: value };
+		let obj     = null;
 
-		const obj = await Model.findOne({ where, attributes: [field] });
+		if (Array.isArray(fields)) {
+			obj = await Model.findOne({ where: { [Op.and]: fields } });
+		}
+
+		if (!Array.isArray(fields) && Object.values(fields)[0]) {
+			obj = await Model.findOne({ where: fields });
+		}
 
 		if (obj) {
-			next(`${fieldName} ${value} уже используется.`);
-		} else {
-			next();
+			throw new Error(`Такая запись уже создана.`);
 		}
 	};
 
@@ -37,7 +43,7 @@ class Validator
 	 * @return {undefined}
 	 */
 	static min = (length, fieldName) => (value, next) => {
-		if (value.trim().length < length) {
+		if (value?.trim()?.length < length) {
 			next(`${fieldName} не может быть короче ${length} символов.`);
 		} else {
 			next();
@@ -53,7 +59,7 @@ class Validator
 	 * @return {undefined}
 	 */
 	static max = (length, fieldName) => (value, next) => {
-		if (value.length > length) {
+		if (value?.length > length) {
 			next(`${fieldName} не может быть длиннее ${length} символов.`);
 		} else {
 			next();
@@ -61,13 +67,30 @@ class Validator
 	};
 
 	/**
-	 * Set not null validation
+	 * Set is not empty validation
 	 *
+	 * @param {string} value
 	 * @param {string} fieldName
 	 *
 	 * @return {Object}
 	 */
-	static notNull = fieldName => ({ msg: `${fieldName} не может быть пустым.` });
-};
+	static isNotEmpty = (value, fieldName) => {
+		if (!value || !value?.trim()?.length) {
+			throw new Error(`Заполните поле "${fieldName}".`);
+		}
+	};
+
+	/**
+	 * Set is integer value validation
+	 *
+	 * @param fieldName
+	 *
+	 * @return {Object}
+	 */
+	static isInt = fieldName => ({
+		value: true,
+		msg:   `Поле "${fieldName}" должено содержать только числа.`,
+	});
+}
 
 module.exports = Validator;
