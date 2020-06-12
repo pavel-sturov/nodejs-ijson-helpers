@@ -1,7 +1,6 @@
 const { Connection } = require('../services');
 const { Op }         = require('sequelize');
 
-
 /**
  * Validator for sequelize models class
  */
@@ -11,9 +10,7 @@ class Validator
 	 * Check is field|fields unique
 	 *
 	 * @param {string} modelName
-	 * @param {string|Array} fields
-	 * @param {string} fieldName
-	 * @param {string} value
+	 * @param {Object|Array} fields
 	 *
 	 * @return {undefined}
 	 */
@@ -67,20 +64,6 @@ class Validator
 	};
 
 	/**
-	 * Set is not empty validation
-	 *
-	 * @param {string} value
-	 * @param {string} fieldName
-	 *
-	 * @return {Object}
-	 */
-	static isNotEmpty = (value, fieldName) => {
-		if (!value || !value?.trim()?.length) {
-			throw new Error(`Заполните поле "${fieldName}".`);
-		}
-	};
-
-	/**
 	 * Set is integer value validation
 	 *
 	 * @param fieldName
@@ -90,6 +73,27 @@ class Validator
 	static isInt = fieldName => ({
 		value: true,
 		msg:   `Поле "${fieldName}" должено содержать только числа.`,
+	});
+
+	/**
+	 * Get message for null|empty validation
+	 *
+	 * @param {string} fieldName
+	 *
+	 * @return {Object}
+	 */
+	static getEmptyMessage = fieldName => ({ msg: `Заполните поле "${fieldName}".` });
+
+	/**
+	 * Not null | empty validation
+	 *
+	 * @param {string} fieldName
+	 *
+	 * @return {Object}
+	 */
+	static notEmpty = fieldName => ({
+		notNull:  this.getEmptyMessage(fieldName),
+		notEmpty: this.getEmptyMessage(fieldName),
 	});
 }
 
