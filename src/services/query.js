@@ -1,10 +1,14 @@
+const JsonQuerySequelize = require('../adapters/JsonQuerySequelize');
+const _                  = require('lodash');
+
 /**
  * @api {Object} JsonQuery
  * JsonQuery
  *
  * @apiGroup TYPES
  *
- * @apiParam {Object} [where] Where condition
+ * @apiParam {Object} [filter] Where condition
+ * @apiParam {String[]} [attributes] Selected attribures. Default: all
  * @apiParam {Number} [page=1] current page
  * @apiParam {Number} [perPage=20] page size
  * @apiParam {String[]} [orderBy] sorting. E.g.: `["-age", "id"]`
@@ -52,21 +56,37 @@ class JsonQuery
 	expands = [];
 
 	/**
+	 * @type {Array.<string>}
+	 */
+	attributes = [];
+
+	/**
+	 * @type {Object}
+	 */
+	filter = {};
+
+	/**
+	 * @type {Object} add AND to filter. E.g. filter AND additionalFilter. (ABAC)
+	 */
+	additionalFilter = {};
+
+	/**
 	 * @constructor
 	 *
 	 * @param {Object} config
-	 * @param {function} models
+	 * @param {function} getModels
 	 */
-	constructor(config = {}, getModels = () => null) {
+	constructor(config = {}, getModels = () => null)
+	{
 		this.models = getModels;
 
-		this.page    = typeof config.page === 'number' && config.page > 0 ? config.page : this.page;
-		this.perPage = typeof config.perPage === 'number' && config.perPage > 0 ? config.perPage : this.perPage;
-		this.orderBy = Array.isArray(config.orderBy) ? config.orderBy : this.orderBy;
-		this.expands = Array.isArray(config.expands) ? config.expands : this.expands;
-
-		// @TODO add where filter
-		// @TODO add attributes select
+		this.page             = typeof config.page === 'number' && config.page > 0 ? config.page : this.page;
+		this.perPage          = typeof config.perPage === 'number' && config.perPage > 0 ? config.perPage : this.perPage;
+		this.orderBy          = Array.isArray(config.orderBy) ? config.orderBy : this.orderBy;
+		this.expands          = Array.isArray(config.expands) ? config.expands : this.expands;
+		this.attributes       = Array.isArray(config.attributes) ? this._validateAttributes(config.attributes) : this.attributes;
+		this.filter           = this._parseWhere(config?.filter ?? {});
+		this.additionalFilter = this._parseWhere(config?.additionalFilter ?? {});
 	}
 
 	/**
@@ -74,23 +94,25 @@ class JsonQuery
 	 *
 	 * @return {number}
 	 */
-	getOffset() {
+	getOffset()
+	{
 		return (this.page - 1) * this.perPage;
 	}
 
 	/**
 	 * Get query order by
 	 *
+	 * @param {Array.<string>} field another order input field
+	 *
 	 * @return {Array.<string|Array>}
 	 */
-	getOrderBy() {
-		const columns = this.orderBy.map(query => {
+	getOrderBy(field)
+	{
+		return (field || this.orderBy).map(query => {
 			return query.substr(0, 1) === '-'
 				   ? [query.substr(1), 'DESC']
 				   : [query, 'ASC'];
 		});
-
-		return columns;
 	}
 
 	/**
@@ -98,7 +120,8 @@ class JsonQuery
 	 *
 	 * @return {number}
 	 */
-	getPage() {
+	getPage()
+	{
 		return this.page;
 	}
 
@@ -107,7 +130,8 @@ class JsonQuery
 	 *
 	 * @return {number}
 	 */
-	getPerPage() {
+	getPerPage()
+	{
 		return this.perPage;
 	}
 
@@ -116,7 +140,8 @@ class JsonQuery
 	 *
 	 * @return {Array.<Object>}
 	 */
-	getInclude() {
+	getInclude()
+	{
 		const includes = [];
 		const models   = this.models();
 
@@ -126,18 +151,18 @@ class JsonQuery
 					includes.push(expand);
 					break;
 				case 'object':
-					const { name, where, required, limit, separate, order } = expand;
+					const { name, where, required, limit, separate, order, attributes } = expand;
 
 					if (name && models[name]) {
 						includes.push({
 							model: models[name],
 							as:    name,
-							...(required !== undefined ? { required } : {}),
-							...(limit ? { limit } : {}),
-							...(separate !== undefined ? { separate } : {}),
-							...(order ? { order } : {}),
-							// @TODO validate where object
-							...(where ? { where } : {}),
+							...(typeof required === 'boolean' ? { required } : {}),
+							...(typeof limit === 'number' ? { limit } : {}),
+							...(typeof separate === 'boolean' ? { separate } : {}),
+							...(order ? { order: this.getOrderBy(order) } : {}),
+							...(attributes ? { attributes: this._validateAttributes(attributes) } : {}),
+							...(where ? { where: this._parseWhere(where) } : {}),
 						});
 					}
 					break;
@@ -151,17 +176,61 @@ class JsonQuery
 	 * Get mysql query
 	 *
 	 * @param {Object} queryConfig
-	 * @param {boolean} isOne
+	 * @param {boolean} isOne is query one row
 	 *
 	 * @return {Object}
 	 */
-	getQuery(queryConfig = {}, isOne = false) {
-		queryConfig.offset  = isOne ? null : this.getOffset();
-		queryConfig.limit   = isOne ? null : this.perPage;
-		queryConfig.order   = isOne ? null : this.getOrderBy();
-		queryConfig.include = this.getInclude();
+	getQuery(queryConfig = {}, isOne = false)
+	{
+		queryConfig.offset  = isOne ? null : (queryConfig?.offset ?? this.getOffset());
+		queryConfig.limit   = isOne ? null : (queryConfig?.limit ?? this.perPage);
+		queryConfig.order   = isOne ? null : (queryConfig?.order ?? this.getOrderBy());
+		queryConfig.include = _.merge(queryConfig?.include ?? [], this.getInclude());
+
+		const attributes = _.merge(queryConfig?.attributes ?? [], this.attributes);
+		if (attributes.length > 0) {
+			queryConfig.attributes = attributes;
+		}
+
+		if (this.filter) {
+			queryConfig.where = _.merge(queryConfig?.where ?? {}, {
+				'$and': this.filter,
+			});
+		}
+
+		if (this.additionalFilter) {
+			queryConfig.where = _.merge(queryConfig?.where ?? {}, {
+				'$and': this.additionalFilter,
+			});
+		}
 
 		return queryConfig;
+	}
+
+	/**
+	 * Validate attributes
+	 *
+	 * @param {Array.<string>} attributes
+	 *
+	 * @return {Array.<string>}
+	 * @private
+	 */
+	_validateAttributes(attributes)
+	{
+		return attributes;
+	}
+
+	/**
+	 * Parse where conditions
+	 *
+	 * @param {Object} conditions
+	 *
+	 * @return {Object}
+	 * @private
+	 */
+	_parseWhere(conditions)
+	{
+		return JsonQuerySequelize.toQuery(conditions);
 	}
 
 	/**
@@ -169,7 +238,8 @@ class JsonQuery
 	 *
 	 * @return {Object}
 	 */
-	toJSON() {
+	toJSON()
+	{
 		return this.getQuery();
 	}
 }
