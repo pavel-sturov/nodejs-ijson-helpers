@@ -2,6 +2,45 @@ const _ = require('lodash');
 
 /**
  * JSON query to Sequelize query adapter
+ *
+ * @example
+ *  {
+ * 		one:   1,
+ * 		two:   2,
+ * 		three: { between: [1, 2] },
+ * 		four:  { like: '%Hello%' },
+ * 		five:  { '>': 10 },
+ * 		six:   { '>=': 10, '<=': 20 },
+ * 		seven: { 'in': [1, 2, 3] },
+ * 		eight: { 'or': [1, 2, 3] },
+ * 		or:    [
+ * 			{
+ * 				one: 1,
+ * 				two: 2,
+ * 			},
+ * 			{
+ * 				one: 1,
+ * 				two: 2,
+ * 				or:  [
+ * 					{
+ * 						one: 1,
+ * 						two: 2,
+ * 					},
+ * 					{ three: 3 },
+ * 				],
+ * 			},
+ * 		],
+ * 		and:   [
+ * 			{
+ * 				one: 1,
+ * 				two: 2,
+ * 			},
+ * 			{
+ * 				one: 1,
+ * 				two: 2,
+ * 			},
+ * 		],
+ * 	};
  */
 class JsonQuerySequelize
 {
@@ -23,6 +62,7 @@ class JsonQuerySequelize
 		LIKE:             'like',
 		IN:               'in',
 		NOT_IN:           '!in',
+		OR:           	  'or',
 		NOT_EQUAL:        '!=',
 		GREATER:          '>',
 		GREATER_OR_EQUAL: '>=',
@@ -38,7 +78,7 @@ class JsonQuerySequelize
 	 * @return {string}
 	 * @private
 	 */
-	_getSequalizeOperator(operator)
+	_getSequelizeOperator(operator)
 	{
 		const op = {
 			[this._operators.BETWEEN]:          '$between',
@@ -176,9 +216,10 @@ class JsonQuerySequelize
 			case this._operators.IN:
 			case this._operators.NOT_IN:
 			case this._operators.NOT_EQUAL:
+			case this._operators.OR:
 				return {
 					[key]: {
-						[this._getSequalizeOperator(firstOperator)]: value[firstOperator],
+						[this._getSequelizeOperator(firstOperator)]: value[firstOperator],
 					},
 				};
 			case this._operators.GREATER:
@@ -187,9 +228,9 @@ class JsonQuerySequelize
 			case this._operators.LESS_OR_EQUAL:
 				return {
 					[key]: {
-						[this._getSequalizeOperator(firstOperator)]: value[firstOperator],
+						[this._getSequelizeOperator(firstOperator)]: value[firstOperator],
 						...(secondOperator ? {
-							[this._getSequalizeOperator(secondOperator)]: value[secondOperator],
+							[this._getSequelizeOperator(secondOperator)]: value[secondOperator],
 						} : {}),
 					},
 				};
