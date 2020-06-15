@@ -86,6 +86,7 @@ class JsonQuerySequelize
 			[this._operators.IN]:               '$in',
 			[this._operators.NOT_IN]:           '$notIn',
 			[this._operators.NOT_EQUAL]:        '$ne',
+			[this._operators.OR]:        		'$or',
 			[this._operators.GREATER]:          '$gt',
 			[this._operators.GREATER_OR_EQUAL]: '$gte',
 			[this._operators.LESS]:             '$lt',
