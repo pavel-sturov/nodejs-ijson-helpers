@@ -10,7 +10,7 @@ const JsonQuery  = require('../services/query');
  */
 module.exports = method => async (data = {}, req, ...params) => {
 	const query = {
-		...(data?.query ?? {}),
+		filter:           data?.query ?? {},
 		additionalFilter: data?.payload?.authorization?.filter ?? {},
 	};
 
