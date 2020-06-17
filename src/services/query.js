@@ -11,6 +11,7 @@ const _                  = require('lodash');
  * @apiParam {String[]} [attributes] Selected attribures. Default: all
  * @apiParam {Number} [page=1] current page
  * @apiParam {Number} [perPage=20] page size
+ * @apiParam {Boolean} [allPage=false] get all items without pagination
  * @apiParam {String[]} [orderBy] sorting. E.g.: `["-age", "id"]`
  * @apiParam {String[]} [expands] expands. E.g.: `["pictures", {"name": "pictures", "where": {}}]`
  *
@@ -42,6 +43,11 @@ class JsonQuery
 	 * @private
 	 */
 	perPage = 20;
+
+	/**
+	 * @type {boolean}
+	 */
+	isAllPage = false;
 
 	/**
 	 * @type {Array.<string>}
@@ -82,6 +88,7 @@ class JsonQuery
 
 		this.page             = typeof config.page === 'number' && config.page > 0 ? config.page : this.page;
 		this.perPage          = typeof config.perPage === 'number' && config.perPage > 0 ? config.perPage : this.perPage;
+		this.isAllPage        = typeof config.allPage === 'boolean' ? config.allPage : this.isAllPage;
 		this.orderBy          = Array.isArray(config.orderBy) ? config.orderBy : this.orderBy;
 		this.expands          = Array.isArray(config.expands) ? config.expands : this.expands;
 		this.attributes       = Array.isArray(config.attributes) ? this._validateAttributes(config.attributes) : this.attributes;
@@ -136,6 +143,16 @@ class JsonQuery
 	}
 
 	/**
+	 * Is enable return all models without pagination
+	 *
+	 * @return {any}
+	 */
+	getIsAllPage()
+	{
+		return this.isAllPage;
+	}
+
+	/**
 	 * Get include query
 	 *
 	 * @return {Array.<Object>}
@@ -182,8 +199,11 @@ class JsonQuery
 	 */
 	getQuery(queryConfig = {}, isOne = false)
 	{
-		queryConfig.offset  = isOne ? null : (queryConfig?.offset ?? this.getOffset());
-		queryConfig.limit   = isOne ? null : (queryConfig?.limit ?? this.perPage);
+		if (!this.isAllPage) {
+			queryConfig.offset = isOne ? null : (queryConfig?.offset ?? this.getOffset());
+			queryConfig.limit  = isOne ? null : (queryConfig?.limit ?? this.perPage);
+		}
+
 		queryConfig.order   = isOne ? null : (queryConfig?.order ?? this.getOrderBy());
 		queryConfig.include = _.merge(queryConfig?.include ?? [], this.getInclude());
 
