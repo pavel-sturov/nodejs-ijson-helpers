@@ -34,10 +34,11 @@ class BaseConnection
 	 *
 	 * @param {Array.<Object>} models
 	 * @param {Object} config
+	 * @param {Object} modelConfig
 	 *
 	 * @return {Promise<{db: sequelize.Sequelize, insertDefaults: insertDefaults}|boolean>}
 	 */
-	static async prepare(models, config = {}) {
+	static async prepare(models, config = {}, modelConfig = {}) {
 		if (this.instance !== null) {
 			return false;
 		}
@@ -51,7 +52,7 @@ class BaseConnection
 
 		// Create models/tables
 		Object.entries(models).forEach(([name, initModel]) => {
-			const model = initModel(connection.getDb(), connection.getSequelize());
+			const model = initModel(connection.getDb(), connection.getSequelize(), modelConfig);
 
 			connection.addModel(name, model);
 
